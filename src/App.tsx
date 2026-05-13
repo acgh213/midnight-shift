@@ -15,6 +15,7 @@ export default function App() {
   const currentScreen = useGameStore((s) => s.currentScreen);
   const setScreen = useGameStore((s) => s.setScreen);
   const loadGameState = useGameStore((s) => s.loadGame);
+  const crtEnabled = useGameStore((s) => s.game.settings.crtScanlines);
 
   useEffect(() => {
     const saved = loadGame();
@@ -45,7 +46,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-dvh bg-asphalt text-gray-200 font-mono">
+    <div className={`min-h-dvh bg-asphalt text-gray-200 font-mono ${crtEnabled ? 'crt-scanlines' : ''}`}>
       <Navigation currentScreen={currentScreen} onNavigate={setScreen} />
       <main className="pb-20 px-2 pt-2 max-w-2xl mx-auto">
         {renderScreen()}
