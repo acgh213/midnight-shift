@@ -6,6 +6,8 @@ import { Garage } from './components/screens/Garage';
 import { CrewRoster } from './components/screens/CrewRoster';
 import { MessageBoard } from './components/screens/MessageBoard';
 import { Settings } from './components/screens/Settings';
+import { RaceSetup } from './components/screens/RaceSetup';
+import { RaceLive } from './components/screens/RaceLive';
 import { Navigation } from './components/layout/Navigation';
 
 export default function App() {
@@ -30,6 +32,10 @@ export default function App() {
         return <MessageBoard />;
       case 'settings':
         return <Settings />;
+      case 'race-setup':
+        return <RaceSetup />;
+      case 'race-live':
+        return <RaceLive />;
       default:
         return <CityMap />;
     }
