@@ -247,6 +247,7 @@ export interface GameState {
   hardcoreMode: boolean;
   nightStartTime: number;
   lastSaveTime: number;
+  recentEvents: GameEvent[];
 }
 
 export interface PrestigeCarryover {
@@ -281,6 +282,18 @@ export interface MessageBoardPost {
   district?: DistrictId;
   eventType: 'race_result' | 'drama' | 'challenge' | 'rumor' | 'crew_news';
   tags: string[];
+}
+
+// --- Game Events ---
+
+export interface GameEvent {
+  id: string;
+  type: 'challenge' | 'upgrade' | 'recruit' | 'poach' | 'taunt';
+  crewId: CrewId;
+  crewName: string;
+  description: string;
+  timestamp: number;
+  districtId?: string;
 }
 
 // --- Prestige ---

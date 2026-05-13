@@ -116,6 +116,7 @@ export function getDefaultGameState(): GameState {
     hardcoreMode: false,
     nightStartTime: Date.now(),
     lastSaveTime: Date.now(),
+    recentEvents: [],
   };
 
   return seedContent(state);
