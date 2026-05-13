@@ -55,6 +55,8 @@ export default function App() {
         return <Prestige />;
       case 'path-select':
         return <PathSelect />;
+      case 'more':
+        return null; // handled by Navigation sheet
       default:
         return <CityMap />;
     }

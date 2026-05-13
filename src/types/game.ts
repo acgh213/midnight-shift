@@ -228,7 +228,8 @@ export type ScreenId =
   | 'midnight-garage'
   | 'path-select'
   | 'prestige'
-  | 'settings';
+  | 'settings'
+  | 'more';
 
 export interface GameState {
   version: number;
