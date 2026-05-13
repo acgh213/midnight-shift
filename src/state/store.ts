@@ -26,7 +26,6 @@ export const useGameStore = create<GameStore>((set) => ({
   sseConnected: false,
   liveEvents: [],
   setScreen: (screen) => set({ currentScreen: screen }),
-  updateGame: (partial) => set((s) => ({ game: { ...s.game, ...partial } })),
   resetGame: () => set({ game: getDefaultGameState() }),
   loadGame: (state) => set({ game: state }),
   setLeaderboard: (entries) => set({ leaderboard: entries }),
@@ -34,4 +33,10 @@ export const useGameStore = create<GameStore>((set) => ({
   addLiveEvent: (type, data) => set((s) => ({
     liveEvents: [{ type, data, receivedAt: Date.now() }, ...s.liveEvents].slice(0, 20),
   })),
+  updateGame: (partial) => set((s) => {
+    const next = { game: { ...s.game, ...partial } };
+    console.log('[Store updateGame] before cash:', s.game.economy.cash, 'after cash:', next.game.economy.cash);
+    console.log('[Store updateGame] before completedRaces:', s.game.completedRaceIds.length, 'after:', next.game.completedRaceIds.length);
+    return next;
+  }),
 }));
