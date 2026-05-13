@@ -230,6 +230,7 @@ export type ScreenId =
   | 'path-select'
   | 'prestige'
   | 'settings'
+  | 'leaderboard'
   | 'more';
 
 export interface GameState {
@@ -323,6 +324,17 @@ export interface SpecialEvent {
   autoResolve: boolean;
   resolved: boolean;
   result?: string;
+}
+
+// --- Leaderboard ---
+
+export interface LeaderboardEntry {
+  rank: number;
+  crewName: string;
+  prestige: number;
+  wins: number;
+  losses: number;
+  lastActive: string;
 }
 
 // --- Prestige ---
