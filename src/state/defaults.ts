@@ -117,6 +117,7 @@ export function getDefaultGameState(): GameState {
     nightStartTime: Date.now(),
     lastSaveTime: Date.now(),
     recentEvents: [],
+    specialEvents: [],
   };
 
   return seedContent(state);

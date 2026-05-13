@@ -249,6 +249,7 @@ export interface GameState {
   nightStartTime: number;
   lastSaveTime: number;
   recentEvents: GameEvent[];
+  specialEvents: SpecialEvent[];
 }
 
 export interface PrestigeCarryover {
@@ -295,6 +296,30 @@ export interface GameEvent {
   description: string;
   timestamp: number;
   districtId?: string;
+}
+
+export type SpecialEventType =
+  | 'midnight_tournament'
+  | 'police_crackdown'
+  | 'street_takeover'
+  | 'parts_shipment'
+  | 'crew_war'
+  | 'wangan_run';
+
+export interface SpecialEvent {
+  id: string;
+  type: SpecialEventType;
+  title: string;
+  description: string;
+  districtId: DistrictId;
+  districtName: string;
+  timestamp: number;
+  expiresAt: number;
+  rewards: { cash: number; rep: number; info: number };
+  risk: 'low' | 'medium' | 'high';
+  autoResolve: boolean;
+  resolved: boolean;
+  result?: string;
 }
 
 // --- Prestige ---

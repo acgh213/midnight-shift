@@ -1,16 +1,20 @@
 import { useGameStore } from '../../state/store';
 import { useDistricts, usePlayerCars, usePlayerDrivers } from '../../hooks/useGame';
+import { participateInEvent } from '../../engine/events';
 import type { DistrictId } from '../../types/game';
 
 export function CityMap() {
   const districts = useDistricts();
   const setScreen = useGameStore((s) => s.setScreen);
-  const activeRaces = useGameStore((s) => s.game.activeRaces);
-  const crews = useGameStore((s) => s.game.crews);
-  const night = useGameStore((s) => s.game.night);
-  const economy = useGameStore((s) => s.game.economy);
+  const game = useGameStore((s) => s.game);
+  const updateGame = useGameStore((s) => s.updateGame);
+  const activeRaces = game.activeRaces;
+  const crews = game.crews;
+  const night = game.night;
+  const economy = game.economy;
   const drivers = usePlayerDrivers();
   const cars = usePlayerCars();
+  const events = game.specialEvents || [];
 
   const canRace = drivers.length > 0 && cars.length > 0;
 
@@ -66,6 +70,64 @@ export function CityMap() {
           <span className="text-gray-300">{cars.length}</span>
         </div>
       </div>
+
+      {/* City Events */}
+      {events.filter((e) => !e.resolved).length > 0 && (
+        <div className="space-y-2">
+          <h2 className="text-xs text-gray-500 uppercase tracking-wider">City Events</h2>
+          {events.filter((e) => !e.resolved).map((event) => {
+            const handleParticipate = () => {
+              const { cashDelta, repDelta, infoDelta, result } = participateInEvent(event, game);
+              const updatedEvent = { ...event, resolved: true, result };
+              updateGame({
+                specialEvents: events.map((e) => (e.id === event.id ? updatedEvent : e)),
+                economy: {
+                  ...economy,
+                  cash: economy.cash + cashDelta,
+                  rep: economy.rep + repDelta,
+                  info: economy.info + infoDelta,
+                },
+              });
+            };
+
+            return (
+              <div
+                key={event.id}
+                className="bg-midnight border rounded p-3"
+                style={{ borderColor: event.risk === 'high' ? '#ff2d9544' : event.risk === 'medium' ? '#ffb80044' : '#00d4ff44' }}
+              >
+                <div className="flex justify-between items-start">
+                  <div>
+                    <span className="text-sm font-bold text-neon-cyan">{event.title}</span>
+                    <span className={`text-[10px] ml-2 px-1.5 py-0.5 rounded ${
+                      event.risk === 'high' ? 'bg-red-500/20 text-red-400' :
+                      event.risk === 'medium' ? 'bg-neon-amber/20 text-neon-amber' :
+                      'bg-green-500/20 text-green-400'
+                    }`}>
+                      {event.risk.toUpperCase()}
+                    </span>
+                  </div>
+                  <span className="text-[10px] text-gray-500">{event.districtName}</span>
+                </div>
+                <p className="text-xs text-gray-400 mt-1">{event.description}</p>
+                <div className="flex justify-between items-center mt-2">
+                  <div className="text-[10px] text-gray-600">
+                    ${event.rewards.cash} · {event.rewards.rep} rep · {event.rewards.info} info
+                  </div>
+                  {!event.autoResolve && (
+                    <button
+                      onClick={handleParticipate}
+                      className="px-3 py-1 bg-neon-pink text-black text-xs font-bold rounded hover:bg-neon-pink/80"
+                    >
+                      Join
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* District grid */}
       <div className="grid grid-cols-2 gap-3">

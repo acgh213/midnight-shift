@@ -1,6 +1,7 @@
 import type { GameState, GameEvent } from '../types/game';
 import { calculateIdleEarnings } from './economy';
 import { processRivalAI } from './rival-ai';
+import { generateSpecialEvents } from './events';
 
 export interface IdleRecap {
   hoursAway: number;
@@ -48,6 +49,15 @@ export function processIdleCatchup(state: GameState, now: number = Date.now()): 
 
   // Add rival events to recent events (keep last 20)
   updatedState.recentEvents = [...rivalEvents, ...(updatedState.recentEvents || [])].slice(0, 20);
+
+  // Generate special events (tournaments, crackdowns, etc.)
+  const eventSeed = state.night * 20000 + Math.floor(hoursAway * 100);
+  const specialEvents = generateSpecialEvents(updatedState, hoursAway, eventSeed);
+  // Auto-resolve expired events from last session
+  const existingEvents = (updatedState.specialEvents || [])
+    .filter((e) => !e.resolved)
+    .map((e) => (e.expiresAt < now ? { ...e, resolved: true, result: 'Event expired while you were away.' } : e));
+  updatedState.specialEvents = [...existingEvents, ...specialEvents].slice(0, 10);
 
   // Count completed offline races
   const completedOffline = state.activeRaces.filter(
