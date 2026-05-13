@@ -6,15 +6,17 @@ import { usePlayerDrivers, usePlayerCars, useDistricts } from '../../hooks/useGa
 export function RaceSetup() {
   const game = useGameStore((s) => s.game);
   const updateGame = useGameStore((s) => s.updateGame);
+  const setScreen = useGameStore((s) => s.setScreen);
   const drivers = usePlayerDrivers();
   const cars = usePlayerCars();
   const districts = useDistricts();
 
   const [selectedDistrict, setSelectedDistrict] = useState<DistrictId>('industrial');
-  const [selectedDriver, setSelectedDriver] = useState('');
-  const [selectedCar, setSelectedCar] = useState('');
+  const [selectedDriver, setSelectedDriver] = useState(drivers[0]?.id ?? '');
+  const [selectedCar, setSelectedCar] = useState(cars[0]?.id ?? '');
   const [stakes, setStakes] = useState<Stakes>('low');
   const [posture, setPosture] = useState<Posture>('safe');
+  const [started, setStarted] = useState(false);
 
   const handleStart = () => {
     if (!selectedDriver || !selectedCar) return;
@@ -39,13 +41,32 @@ export function RaceSetup() {
     };
 
     updateGame({ activeRaces: [...game.activeRaces, race] });
+    setStarted(true);
+    setTimeout(() => {
+      setScreen('race-live');
+      setStarted(false);
+    }, 600);
   };
 
   if (drivers.length === 0 || cars.length === 0) {
     return (
       <div className="bg-midnight border border-neon-cyan/20 rounded p-6 text-center">
         <p className="text-gray-500 text-sm">You need a driver and a car to race.</p>
-        <p className="text-gray-600 text-xs mt-2">Recruit drivers and build your garage first.</p>
+        <p className="text-gray-600 text-xs mt-2">Recruit drivers at the Junkyard and buy cars at the Market.</p>
+        <div className="flex gap-3 justify-center mt-4">
+          <button
+            onClick={() => setScreen('junkyard')}
+            className="px-4 py-2 bg-neon-pink text-black text-xs font-bold rounded hover:bg-neon-pink/80"
+          >
+            Visit Junkyard
+          </button>
+          <button
+            onClick={() => setScreen('car-market')}
+            className="px-4 py-2 bg-neon-pink text-black text-xs font-bold rounded hover:bg-neon-pink/80"
+          >
+            Browse Market
+          </button>
+        </div>
       </div>
     );
   }
@@ -158,10 +179,14 @@ export function RaceSetup() {
       {/* Start button */}
       <button
         onClick={handleStart}
-        disabled={!selectedDriver || !selectedCar}
-        className="w-full py-3 bg-neon-pink text-black font-bold rounded disabled:opacity-30 disabled:cursor-not-allowed hover:bg-neon-pink/80 transition-colors"
+        disabled={!selectedDriver || !selectedCar || started}
+        className={`w-full py-3 font-bold rounded transition-all ${
+          started
+            ? 'bg-green-600 text-white'
+            : 'bg-neon-pink text-black hover:bg-neon-pink/80 disabled:opacity-30 disabled:cursor-not-allowed'
+        }`}
       >
-        Start Race
+        {started ? 'Race Started! →' : 'Start Race'}
       </button>
     </div>
   );

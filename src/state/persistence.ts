@@ -1,7 +1,7 @@
 import type { GameState } from '../types/game';
 
 const SAVE_KEY = 'midnight-shift-save';
-const CURRENT_VERSION = 1;
+const CURRENT_VERSION = 2; // v0.2: added starter driver/car, recruitment, car market
 
 export function saveGame(state: GameState): void {
   try {
