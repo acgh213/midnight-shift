@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useGameStore } from '../../state/store';
 import type { RaceResult, RaceEvent } from '../../types/game';
 import { simulateRace } from '../../engine/simulator';
@@ -15,8 +15,25 @@ export function RaceLive() {
   const [completedRaces, setCompletedRaces] = useState<RaceResult[]>([]);
   const { playEngine, playCrash, playFinish } = useAudio();
 
+  // Track which dependency triggered the effect re-run
+  const prevDeps = useRef<Record<string, unknown>>({});
+  const depValues = { activeRaces: activeRaces.length, gameCash: game.economy.cash, gameRef: game };
+  const changedDeps: string[] = [];
+  for (const [k, v] of Object.entries(depValues)) {
+    if (prevDeps.current[k] !== v) changedDeps.push(k);
+  }
+  prevDeps.current = depValues;
+
   useEffect(() => {
-    logDebug('RaceLive:useEffect triggered', { activeRacesCount: activeRaces.length });
+    logDebug(`RaceLive:useEffect triggered (changed: ${changedDeps.join(', ') || 'mount'})`, { activeRacesCount: activeRaces.length });
+
+    // Separate unmount tracker
+    return () => {
+      logDebug('RaceLive: component UNMOUNTING');
+    };
+  }, []);
+
+  useEffect(() => {
 
     if (activeRaces.length === 0) {
       logDebug('RaceLive: no active races, returning');
