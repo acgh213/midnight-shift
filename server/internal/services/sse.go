@@ -1,7 +1,6 @@
 package services
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"sync"
@@ -64,15 +63,9 @@ func (h *SSEHub) Broadcast(event SSEEvent) {
 	h.mu.RLock()
 	defer h.mu.RUnlock()
 
-	data, err := json.Marshal(event)
-	if err != nil {
-		log.Printf("SSE marshal error: %v", err)
-		return
-	}
-
 	for _, client := range h.clients {
 		select {
-		case client.Events <- SSEEvent{Type: event.Type, Data: json.RawMessage(data)}:
+		case client.Events <- event:
 		default:
 			// Client buffer full, drop
 		}
