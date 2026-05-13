@@ -1,7 +1,8 @@
 import type { GameState } from '../types/game';
+import { seedContent } from '../content/seed';
 
 export function getDefaultGameState(): GameState {
-  return {
+  const state: GameState = {
     version: 1,
     night: 1,
     playerPath: 'racer',
@@ -116,4 +117,6 @@ export function getDefaultGameState(): GameState {
     nightStartTime: Date.now(),
     lastSaveTime: Date.now(),
   };
+
+  return seedContent(state);
 }
