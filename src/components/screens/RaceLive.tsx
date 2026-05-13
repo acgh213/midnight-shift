@@ -3,6 +3,7 @@ import { useGameStore } from '../../state/store';
 import type { RaceResult, RaceEvent } from '../../types/game';
 import { simulateRace } from '../../engine/simulator';
 import { applyRaceResult } from '../../engine/economy';
+import { useAudio } from '../../hooks/useAudio';
 
 export function RaceLive() {
   const game = useGameStore((s) => s.game);
@@ -12,34 +13,39 @@ export function RaceLive() {
   const [liveEvents, setLiveEvents] = useState<RaceEvent[]>([]);
   const [completedRaces, setCompletedRaces] = useState<RaceResult[]>([]);
   const processedRef = useRef<Set<string>>(new Set());
+  const { playEngine, playCrash, playFinish } = useAudio();
 
   useEffect(() => {
     if (activeRaces.length === 0) return;
 
     const race = activeRaces[0];
-    // Don't re-process already-handled races
     if (processedRef.current.has(race.id)) return;
 
     const district = game.districts[race.districtId];
     if (!district) return;
 
     processedRef.current.add(race.id);
+    playEngine();
 
-    // For short races, simulate immediately and show events
     if (race.length === '5m' || race.length === '30m') {
       const result = simulateRace(race, game.drivers, game.cars, district);
       setLiveEvents(result.events);
+
+      // Play crash sounds for crash events
+      const hasCrash = result.events.some((e) => e.type === 'CRASH_OUT' || e.type === 'CRASH_RECOVER');
+      if (hasCrash) setTimeout(() => playCrash(), 500);
 
       const totalTime = race.length === '5m' ? 3000 : 5000;
       const timer = setTimeout(() => {
         setCompletedRaces((prev) => [...prev, result]);
         setLiveEvents([]);
+        playFinish();
         updateGame(applyRaceResult(game, result, race));
       }, totalTime);
 
       return () => clearTimeout(timer);
     }
-  }, [activeRaces, game, updateGame]);
+  }, [activeRaces, game, updateGame, playEngine, playCrash, playFinish]);
 
   if (activeRaces.length === 0 && completedRaces.length === 0) {
     return (

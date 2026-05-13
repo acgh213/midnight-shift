@@ -1,24 +1,66 @@
 import { useGameStore } from '../../state/store';
 import { generatePosts, generateWelcomePosts } from '../../generators/message-board';
-import type { MessageBoardPost } from '../../types/game';
+import type { MessageBoardPost, GameEvent } from '../../types/game';
 import { useState, useEffect } from 'react';
+
+function eventToPost(event: GameEvent): MessageBoardPost {
+  const handle = event.crewName || 'Unknown Crew';
+  const eventTypeMap: Record<string, MessageBoardPost['eventType']> = {
+    challenge: 'challenge',
+    poach: 'drama',
+    taunt: 'drama',
+    upgrade: 'crew_news',
+    recruit: 'crew_news',
+  };
+
+  const tagMap: Record<string, string[]> = {
+    challenge: ['challenge', event.crewName.toLowerCase().replace(/\s+/g, '-')],
+    poach: ['poaching', 'drama'],
+    taunt: ['smack-talk'],
+    upgrade: ['garage'],
+    recruit: ['recruitment'],
+  };
+
+  return {
+    id: event.id,
+    handle,
+    timestamp: event.timestamp,
+    content: event.description,
+    district: event.districtId as any,
+    eventType: eventTypeMap[event.type] || 'rumor',
+    tags: tagMap[event.type] || ['city'],
+  };
+}
 
 export function MessageBoard() {
   const game = useGameStore((s) => s.game);
   const [posts, setPosts] = useState<MessageBoardPost[]>([]);
 
   useEffect(() => {
-    // Generate posts based on current game state
     const seed = game.night * 1000 + game.completedRaceIds.length;
+
+    // Convert rival events to posts
+    const eventPosts: MessageBoardPost[] = (game.recentEvents || [])
+      .slice(-10)
+      .map(eventToPost)
+      .reverse(); // newest first
+
+    let generatedPosts: MessageBoardPost[];
     if (game.completedRaceIds.length > 0) {
       const recentResults = game.completedRaceIds
         .map((id) => game.raceResults[id])
         .filter(Boolean);
-      setPosts(generatePosts(seed, game.drivers, game.crews, recentResults, 8));
+      generatedPosts = generatePosts(seed, game.drivers, game.crews, recentResults, 6);
     } else {
-      setPosts(generateWelcomePosts());
+      generatedPosts = generateWelcomePosts();
     }
-  }, [game.night, game.completedRaceIds.length]);
+
+    // Merge: rival events first, then generated posts (no dupes by id)
+    const seenIds = new Set(eventPosts.map((p) => p.id));
+    const uniqueGenerated = generatedPosts.filter((p) => !seenIds.has(p.id));
+
+    setPosts([...eventPosts, ...uniqueGenerated].slice(0, 15));
+  }, [game.night, game.completedRaceIds.length, game.recentEvents]);
 
   if (posts.length === 0) {
     return (
