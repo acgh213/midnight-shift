@@ -14,6 +14,14 @@ export function CityMap() {
 
   const canRace = drivers.length > 0 && cars.length > 0;
 
+  if (!districts || !crews) {
+    return (
+      <div className="bg-midnight border border-neon-cyan/20 rounded p-6 text-center">
+        <p className="text-gray-500 text-sm">Loading game state...</p>
+      </div>
+    );
+  }
+
   const getRivalName = (districtId: DistrictId): string => {
     const district = districts[districtId];
     if (!district) return 'Unknown';

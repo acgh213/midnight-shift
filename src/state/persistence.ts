@@ -1,10 +1,12 @@
 import type { GameState } from '../types/game';
 
 const SAVE_KEY = 'midnight-shift-save';
+const CURRENT_VERSION = 1;
 
 export function saveGame(state: GameState): void {
   try {
     state.lastSaveTime = Date.now();
+    state.version = CURRENT_VERSION;
     localStorage.setItem(SAVE_KEY, JSON.stringify(state));
   } catch (e) {
     console.error('Failed to save game:', e);
@@ -15,7 +17,20 @@ export function loadGame(): GameState | null {
   try {
     const raw = localStorage.getItem(SAVE_KEY);
     if (!raw) return null;
-    return JSON.parse(raw) as GameState;
+    const parsed = JSON.parse(raw);
+    // Version gate: discard saves from incompatible versions
+    if (!parsed.version || parsed.version !== CURRENT_VERSION) {
+      console.warn(`Discarding save with version ${parsed.version}, current is ${CURRENT_VERSION}`);
+      localStorage.removeItem(SAVE_KEY);
+      return null;
+    }
+    // Structural validation: must have essential keys
+    if (!parsed.districts || !parsed.crews || !parsed.economy) {
+      console.warn('Save missing essential keys, discarding');
+      localStorage.removeItem(SAVE_KEY);
+      return null;
+    }
+    return parsed as GameState;
   } catch (e) {
     console.error('Failed to load game:', e);
     return null;
