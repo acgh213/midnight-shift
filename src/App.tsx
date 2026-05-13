@@ -7,6 +7,7 @@ import { CarMarket } from './components/screens/CarMarket';
 import { CrewRoster } from './components/screens/CrewRoster';
 import { Junkyard } from './components/screens/Junkyard';
 import { Customization } from './components/screens/Customization';
+import { PartsShop } from './components/screens/PartsShop';
 import { MessageBoard } from './components/screens/MessageBoard';
 import { Settings } from './components/screens/Settings';
 import { RaceSetup } from './components/screens/RaceSetup';
@@ -40,6 +41,8 @@ export default function App() {
         return <Junkyard />;
       case 'customization':
         return <Customization />;
+      case 'parts-shop':
+        return <PartsShop />;
       case 'message-board':
         return <MessageBoard />;
       case 'settings':

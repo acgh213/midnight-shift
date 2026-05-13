@@ -34,12 +34,20 @@ export function Garage() {
           {cars.map((car) => (
             <div key={car.id}>
               <CarCard car={car} />
-              <button
-                onClick={() => setScreen('customization')}
-                className="mt-1 w-full py-1.5 text-xs text-neon-cyan border border-neon-cyan/20 rounded hover:bg-neon-cyan/10 transition-colors"
-              >
-                Customize
-              </button>
+              <div className="flex gap-1 mt-1">
+                <button
+                  onClick={() => setScreen('customization')}
+                  className="flex-1 py-1.5 text-xs text-neon-cyan border border-neon-cyan/20 rounded hover:bg-neon-cyan/10 transition-colors"
+                >
+                  Customize
+                </button>
+                <button
+                  onClick={() => setScreen('parts-shop')}
+                  className="flex-1 py-1.5 text-xs text-neon-amber border border-neon-amber/20 rounded hover:bg-neon-amber/10 transition-colors"
+                >
+                  Upgrade
+                </button>
+              </div>
             </div>
           ))}
         </div>
