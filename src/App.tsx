@@ -8,6 +8,7 @@ import { MessageBoard } from './components/screens/MessageBoard';
 import { Settings } from './components/screens/Settings';
 import { RaceSetup } from './components/screens/RaceSetup';
 import { RaceLive } from './components/screens/RaceLive';
+import { Prestige } from './components/screens/Prestige';
 import { Navigation } from './components/layout/Navigation';
 
 export default function App() {
@@ -36,6 +37,8 @@ export default function App() {
         return <RaceSetup />;
       case 'race-live':
         return <RaceLive />;
+      case 'prestige':
+        return <Prestige />;
       default:
         return <CityMap />;
     }
