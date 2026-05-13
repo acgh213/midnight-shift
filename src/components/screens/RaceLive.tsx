@@ -33,18 +33,23 @@ export function RaceLive() {
 
       const totalTime = race.length === '5m' ? 3000 : 5000;
       const timer = setTimeout(() => {
-        const newState = applyRaceResult(game, result, race);
-        console.log('[RaceLive] applying result:', {
-          outcome: result.outcome,
-          cash: result.rewards.cash,
-          districtChange: result.districtControlChange,
-          completedRaces: newState.completedRaceIds.length,
-          activeRacesRemaining: newState.activeRaces.length,
-        });
-        setCompletedRaces((prev) => [...prev, result]);
-        setLiveEvents([]);
-        playFinish();
-        updateGame(newState);
+        try {
+          const newState = applyRaceResult(game, result, race);
+          console.log('[RaceLive] applying result:', {
+            outcome: result.outcome,
+            cash: result.rewards.cash,
+            districtChange: result.districtControlChange,
+            completedRaces: newState.completedRaceIds.length,
+            activeRacesRemaining: newState.activeRaces.length,
+          });
+          setCompletedRaces((prev) => [...prev, result]);
+          setLiveEvents([]);
+          playFinish();
+          updateGame(newState);
+          console.log('[RaceLive] updateGame called successfully');
+        } catch (err) {
+          console.error('[RaceLive] applyRaceResult FAILED:', err);
+        }
       }, totalTime);
 
       return () => clearTimeout(timer);
