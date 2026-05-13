@@ -28,6 +28,7 @@ const SECONDARY: NavItem[] = [
   { screen: 'race-live', icon: '📡', label: 'Race Live' },
   { screen: 'message-board', icon: '📋', label: 'Message Board' },
   { screen: 'leaderboard', icon: '🏆', label: 'Leaderboard' },
+  { screen: 'debug', icon: '🐛', label: 'Debug' },
   { screen: 'path-select', icon: '🛣', label: 'Your Path' },
   { screen: 'settings', icon: '⚙', label: 'Settings' },
 ];

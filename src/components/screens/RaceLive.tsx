@@ -8,6 +8,7 @@ import { useAudio } from '../../hooks/useAudio';
 export function RaceLive() {
   const game = useGameStore((s) => s.game);
   const updateGame = useGameStore((s) => s.updateGame);
+  const logDebug = useGameStore((s) => s.logDebug);
   const setScreen = useGameStore((s) => s.setScreen);
   const activeRaces = game.activeRaces;
   const [liveEvents, setLiveEvents] = useState<RaceEvent[]>([]);
@@ -15,46 +16,78 @@ export function RaceLive() {
   const { playEngine, playCrash, playFinish } = useAudio();
 
   useEffect(() => {
-    if (activeRaces.length === 0) return;
+    logDebug('RaceLive:useEffect triggered', { activeRacesCount: activeRaces.length });
+
+    if (activeRaces.length === 0) {
+      logDebug('RaceLive: no active races, returning');
+      return;
+    }
 
     const race = activeRaces[0];
-    const district = game.districts[race.districtId];
-    if (!district) return;
+    logDebug('RaceLive: processing race', { raceId: race.id, stakes: race.stakes, length: race.length, district: race.districtId });
 
+    const district = game.districts[race.districtId];
+    if (!district) {
+      logDebug('RaceLive: district not found, aborting', { districtId: race.districtId });
+      return;
+    }
+
+    logDebug('RaceLive: calling playEngine');
     playEngine();
 
     if (race.length === '5m' || race.length === '30m') {
+      logDebug('RaceLive: short race, running simulation', { length: race.length });
       const result = simulateRace(race, game.drivers, game.cars, district);
+      logDebug('RaceLive: simulation complete', {
+        outcome: result.outcome,
+        cash: result.rewards.cash,
+        rep: result.rewards.rep,
+        districtChange: result.districtControlChange,
+        eventsCount: result.events.length,
+      });
       setLiveEvents(result.events);
 
-      // Play crash sounds for crash events
       const hasCrash = result.events.some((e) => e.type === 'CRASH_OUT' || e.type === 'CRASH_RECOVER');
       if (hasCrash) setTimeout(() => playCrash(), 500);
 
       const totalTime = race.length === '5m' ? 3000 : 5000;
+      logDebug('RaceLive: setting timeout', { totalTimeMs: totalTime });
+
       const timer = setTimeout(() => {
+        logDebug('RaceLive: timeout fired, applying result', { raceId: race.id });
         try {
           const newState = applyRaceResult(game, result, race);
-          console.log('[RaceLive] applying result:', {
+          logDebug('RaceLive: applyRaceResult SUCCESS', {
             outcome: result.outcome,
-            cash: result.rewards.cash,
-            districtChange: result.districtControlChange,
-            completedRaces: newState.completedRaceIds.length,
-            activeRacesRemaining: newState.activeRaces.length,
+            cashBefore: game.economy.cash,
+            cashAfter: newState.economy.cash,
+            districtBefore: game.districts[race.districtId]?.controlPercent,
+            districtAfter: newState.districts[race.districtId]?.controlPercent,
+            completedBefore: game.completedRaceIds.length,
+            completedAfter: newState.completedRaceIds.length,
+            activeBefore: game.activeRaces.length,
+            activeAfter: newState.activeRaces.length,
           });
           setCompletedRaces((prev) => [...prev, result]);
           setLiveEvents([]);
           playFinish();
+          logDebug('RaceLive: calling updateGame');
           updateGame(newState);
-          console.log('[RaceLive] updateGame called successfully');
+          logDebug('RaceLive: updateGame returned');
         } catch (err) {
+          logDebug('RaceLive: applyRaceResult FAILED', { error: String(err), stack: (err as Error).stack });
           console.error('[RaceLive] applyRaceResult FAILED:', err);
         }
       }, totalTime);
 
-      return () => clearTimeout(timer);
+      return () => {
+        logDebug('RaceLive: effect cleanup — clearing timeout', { raceId: race.id });
+        clearTimeout(timer);
+      };
+    } else {
+      logDebug('RaceLive: long race, not simulating inline', { length: race.length });
     }
-  }, [activeRaces, game, updateGame, playEngine, playCrash, playFinish]);
+  }, [activeRaces, game, updateGame, playEngine, playCrash, playFinish, logDebug]);
 
   if (activeRaces.length === 0 && completedRaces.length === 0) {
     return (

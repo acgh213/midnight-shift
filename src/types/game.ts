@@ -231,6 +231,7 @@ export type ScreenId =
   | 'prestige'
   | 'settings'
   | 'leaderboard'
+  | 'debug'
   | 'more';
 
 export interface GameState {
@@ -335,6 +336,15 @@ export interface LeaderboardEntry {
   wins: number;
   losses: number;
   lastActive: string;
+}
+
+// --- Debug ---
+
+export interface DebugEvent {
+  id: number;
+  timestamp: number;
+  message: string;
+  data?: unknown;
 }
 
 // --- Prestige ---
