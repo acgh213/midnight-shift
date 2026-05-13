@@ -215,6 +215,7 @@ export type ScreenId =
   | 'city-map'
   | 'garage'
   | 'car-detail'
+  | 'car-market'
   | 'crew-roster'
   | 'driver-detail'
   | 'race-setup'

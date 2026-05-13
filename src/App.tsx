@@ -3,7 +3,9 @@ import { useGameStore } from './state/store';
 import { loadGame } from './state/persistence';
 import { CityMap } from './components/screens/CityMap';
 import { Garage } from './components/screens/Garage';
+import { CarMarket } from './components/screens/CarMarket';
 import { CrewRoster } from './components/screens/CrewRoster';
+import { Junkyard } from './components/screens/Junkyard';
 import { MessageBoard } from './components/screens/MessageBoard';
 import { Settings } from './components/screens/Settings';
 import { RaceSetup } from './components/screens/RaceSetup';
@@ -28,8 +30,12 @@ export default function App() {
         return <CityMap />;
       case 'garage':
         return <Garage />;
+      case 'car-market':
+        return <CarMarket />;
       case 'crew-roster':
         return <CrewRoster />;
+      case 'junkyard':
+        return <Junkyard />;
       case 'message-board':
         return <MessageBoard />;
       case 'settings':
