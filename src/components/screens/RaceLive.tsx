@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { useGameStore } from '../../state/store';
 import type { RaceResult, RaceEvent } from '../../types/game';
 import { simulateRace } from '../../engine/simulator';
@@ -12,19 +12,15 @@ export function RaceLive() {
   const activeRaces = game.activeRaces;
   const [liveEvents, setLiveEvents] = useState<RaceEvent[]>([]);
   const [completedRaces, setCompletedRaces] = useState<RaceResult[]>([]);
-  const processedRef = useRef<Set<string>>(new Set());
   const { playEngine, playCrash, playFinish } = useAudio();
 
   useEffect(() => {
     if (activeRaces.length === 0) return;
 
     const race = activeRaces[0];
-    if (processedRef.current.has(race.id)) return;
-
     const district = game.districts[race.districtId];
     if (!district) return;
 
-    processedRef.current.add(race.id);
     playEngine();
 
     if (race.length === '5m' || race.length === '30m') {
