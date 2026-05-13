@@ -16,43 +16,34 @@ import (
 )
 
 func main() {
-	// Database
 	dbPath := os.Getenv("MS_DB_PATH")
-	if dbPath == "" {
-		dbPath = "midnight-shift.db"
-	}
+	if dbPath == "" { dbPath = "midnight-shift.db" }
 
 	database, err := sql.Open("sqlite3", dbPath)
-	if err != nil {
-		log.Fatalf("failed to open database: %v", err)
-	}
+	if err != nil { log.Fatalf("open db: %v", err) }
 	defer database.Close()
 
 	if err := db.RunMigrations(database); err != nil {
-		log.Fatalf("failed to run migrations: %v", err)
+		log.Fatalf("migrations: %v", err)
 	}
 	log.Println("migrations complete")
 
-	// Services
 	persistence := services.NewPersistenceService(database)
 	leaderboard := services.NewLeaderboardService(database)
+	sseHub := services.NewSSEHub()
 
-	// Router
 	r := chi.NewRouter()
 	r.Use(app.CORS)
 
-	handlers := app.NewHandlers(persistence, leaderboard)
+	handlers := app.NewHandlers(persistence, leaderboard, sseHub)
 	handlers.RegisterRoutes(r)
 
-	// Start
 	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
-	}
+	if port == "" { port = "8080" }
 
 	addr := fmt.Sprintf(":%s", port)
-	log.Printf("Midnight Shift server starting on %s", addr)
+	log.Printf("Midnight Shift server starting on %s (SSE active)", addr)
 	if err := http.ListenAndServe(addr, r); err != nil {
-		log.Fatalf("server error: %v", err)
+		log.Fatalf("server: %v", err)
 	}
 }
