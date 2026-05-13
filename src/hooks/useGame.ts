@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useGameStore } from '../state/store';
 import type { Crew, Driver, Car, District, CrewId } from '../types/game';
 
@@ -6,17 +7,23 @@ export function usePlayerCrew(): Crew {
 }
 
 export function usePlayerDrivers(): Driver[] {
-  return useGameStore((s) => {
-    const playerCrew = s.game.crews.player;
-    return playerCrew.drivers.map((id) => s.game.drivers[id]).filter(Boolean);
-  });
+  const driverIds = useGameStore((s) => s.game.crews.player.drivers);
+  const allDrivers = useGameStore((s) => s.game.drivers);
+
+  return useMemo(
+    () => driverIds.map((id) => allDrivers[id]).filter(Boolean),
+    [driverIds, allDrivers]
+  );
 }
 
 export function usePlayerCars(): Car[] {
-  return useGameStore((s) => {
-    const playerCrew = s.game.crews.player;
-    return playerCrew.cars.map((id) => s.game.cars[id]).filter(Boolean);
-  });
+  const carIds = useGameStore((s) => s.game.crews.player.cars);
+  const allCars = useGameStore((s) => s.game.cars);
+
+  return useMemo(
+    () => carIds.map((id) => allCars[id]).filter(Boolean),
+    [carIds, allCars]
+  );
 }
 
 export function useEconomy() {
