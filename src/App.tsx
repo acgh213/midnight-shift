@@ -11,6 +11,7 @@ import { Settings } from './components/screens/Settings';
 import { RaceSetup } from './components/screens/RaceSetup';
 import { RaceLive } from './components/screens/RaceLive';
 import { Prestige } from './components/screens/Prestige';
+import { PathSelect } from './components/screens/PathSelect';
 import { Navigation } from './components/layout/Navigation';
 
 export default function App() {
@@ -46,6 +47,8 @@ export default function App() {
         return <RaceLive />;
       case 'prestige':
         return <Prestige />;
+      case 'path-select':
+        return <PathSelect />;
       default:
         return <CityMap />;
     }

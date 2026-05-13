@@ -224,6 +224,7 @@ export type ScreenId =
   | 'message-board'
   | 'junkyard'
   | 'midnight-garage'
+  | 'path-select'
   | 'prestige'
   | 'settings';
 

@@ -2,10 +2,16 @@ import { useGameStore } from '../../state/store';
 import { saveGame } from '../../state/persistence';
 import { getDefaultGameState } from '../../state/defaults';
 
+const PATH_LABELS: Record<string, string> = {
+  racer: 'The Racer',
+  boss: 'The Boss',
+};
+
 export function Settings() {
   const game = useGameStore((s) => s.game);
   const updateGame = useGameStore((s) => s.updateGame);
   const loadGame = useGameStore((s) => s.loadGame);
+  const setScreen = useGameStore((s) => s.setScreen);
 
   const toggleScanlines = () => {
     const next = { ...game.settings, crtScanlines: !game.settings.crtScanlines };
@@ -20,7 +26,7 @@ export function Settings() {
   const handleReset = () => {
     if (confirm('Reset all progress? This cannot be undone.')) {
       const fresh = getDefaultGameState();
-      fresh.settings = game.settings; // Keep settings
+      fresh.settings = game.settings;
       loadGame(fresh);
       saveGame(fresh);
     }
@@ -51,6 +57,16 @@ export function Settings() {
           />
         </label>
 
+        <div className="pt-3 border-t border-neon-cyan/10">
+          <button
+            onClick={() => setScreen('path-select')}
+            className="w-full py-2 border border-neon-cyan/30 text-neon-cyan text-sm rounded hover:bg-neon-cyan/10 transition-colors flex justify-between items-center px-3"
+          >
+            <span>Your Path</span>
+            <span className="text-xs text-gray-500">{PATH_LABELS[game.playerPath]}</span>
+          </button>
+        </div>
+
         <div className="pt-4 border-t border-neon-cyan/10 space-y-2">
           <p className="text-xs text-gray-600 text-center">
             Night {game.night} · {Object.values(game.districts).filter((d) => d.controlPercent >= 50).length}/6 districts controlled
@@ -74,7 +90,7 @@ export function Settings() {
         </div>
 
         <div className="pt-2 border-t border-neon-cyan/10">
-          <p className="text-xs text-gray-600 text-center">Midnight Shift v0.1.0</p>
+          <p className="text-xs text-gray-600 text-center">Midnight Shift v0.2.0</p>
         </div>
       </div>
     </div>
