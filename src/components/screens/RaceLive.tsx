@@ -14,6 +14,8 @@ export function RaceLive() {
   const activeRaces = game.activeRaces;
   const [liveEvents, setLiveEvents] = useState<RaceEvent[]>([]);
   const [completedRaces, setCompletedRaces] = useState<RaceResult[]>([]);
+  const [showSkip, setShowSkip] = useState(false);
+  const skipRef = useRef<(() => void) | null>(null);
   const { playEngine, playCrash, playFinish } = useAudio();
 
   // Track which dependency triggered the effect re-run
@@ -53,58 +55,82 @@ export function RaceLive() {
     logDebug('RaceLive: calling playEngine');
     playEngine();
 
-    if (race.length === '5m' || race.length === '30m') {
-      logDebug('RaceLive: short race, running simulation', { length: race.length });
-      const result = simulateRace(race, game.drivers, game.cars, district);
-      logDebug('RaceLive: simulation complete', {
-        outcome: result.outcome,
-        cash: result.rewards.cash,
-        rep: result.rewards.rep,
-        districtChange: result.districtControlChange,
-        eventsCount: result.events.length,
-      });
-      setLiveEvents(result.events);
+    // All race lengths are simulated inline — longer races get proportionally longer visual delays
+    const delayMap: Record<string, number> = {
+      '5m': 3000,
+      '30m': 5000,
+      '4h': 8000,
+      '8h': 15000,
+    };
+    const totalTime = delayMap[race.length] || 5000;
+    const isLong = totalTime > 5000;
 
-      const hasCrash = result.events.some((e) => e.type === 'CRASH_OUT' || e.type === 'CRASH_RECOVER');
-      if (hasCrash) setTimeout(() => playCrash(), 500);
+    logDebug(`RaceLive: running simulation (delay: ${totalTime}ms)`, { length: race.length });
+    const result = simulateRace(race, game.drivers, game.cars, district);
+    logDebug('RaceLive: simulation complete', {
+      outcome: result.outcome,
+      cash: result.rewards.cash,
+      rep: result.rewards.rep,
+      districtChange: result.districtControlChange,
+      eventsCount: result.events.length,
+    });
+    setLiveEvents(result.events);
 
-      const totalTime = race.length === '5m' ? 3000 : 5000;
-      logDebug('RaceLive: setting timeout', { totalTimeMs: totalTime });
+    const hasCrash = result.events.some((e) => e.type === 'CRASH_OUT' || e.type === 'CRASH_RECOVER');
+    if (hasCrash) setTimeout(() => playCrash(), 500);
 
-      const timer = setTimeout(() => {
-        logDebug('RaceLive: timeout fired, applying result', { raceId: race.id });
-        try {
-          const newState = applyRaceResult(game, result, race);
-          logDebug('RaceLive: applyRaceResult SUCCESS', {
-            outcome: result.outcome,
-            cashBefore: game.economy.cash,
-            cashAfter: newState.economy.cash,
-            districtBefore: game.districts[race.districtId]?.controlPercent,
-            districtAfter: newState.districts[race.districtId]?.controlPercent,
-            completedBefore: game.completedRaceIds.length,
-            completedAfter: newState.completedRaceIds.length,
-            activeBefore: game.activeRaces.length,
-            activeAfter: newState.activeRaces.length,
-          });
-          setCompletedRaces((prev) => [...prev, result]);
-          setLiveEvents([]);
-          playFinish();
-          logDebug('RaceLive: calling updateGame');
-          updateGame(newState);
-          logDebug('RaceLive: updateGame returned');
-        } catch (err) {
-          logDebug('RaceLive: applyRaceResult FAILED', { error: String(err), stack: (err as Error).stack });
-          console.error('[RaceLive] applyRaceResult FAILED:', err);
-        }
-      }, totalTime);
+    logDebug('RaceLive: setting timeout', { totalTimeMs: totalTime, isLong });
 
-      return () => {
-        logDebug('RaceLive: effect cleanup — clearing timeout', { raceId: race.id });
-        clearTimeout(timer);
-      };
-    } else {
-      logDebug('RaceLive: long race, not simulating inline', { length: race.length });
-    }
+    // Allow skipping long race delays
+    let skipRef = { skipped: false };
+    const timer = setTimeout(() => {
+      logDebug('RaceLive: timeout fired, applying result', { raceId: race.id });
+      try {
+        const newState = applyRaceResult(game, result, race);
+        logDebug('RaceLive: applyRaceResult SUCCESS', {
+          outcome: result.outcome,
+          cashBefore: game.economy.cash,
+          cashAfter: newState.economy.cash,
+          districtBefore: game.districts[race.districtId]?.controlPercent,
+          districtAfter: newState.districts[race.districtId]?.controlPercent,
+          completedBefore: game.completedRaceIds.length,
+          completedAfter: newState.completedRaceIds.length,
+          activeBefore: game.activeRaces.length,
+          activeAfter: newState.activeRaces.length,
+        });
+        setCompletedRaces((prev) => [...prev, result]);
+        setLiveEvents([]);
+        setShowSkip(false);
+        playFinish();
+        logDebug('RaceLive: calling updateGame');
+        updateGame(newState);
+        logDebug('RaceLive: updateGame returned');
+      } catch (err) {
+        logDebug('RaceLive: applyRaceResult FAILED', { error: String(err), stack: (err as Error).stack });
+        console.error('[RaceLive] applyRaceResult FAILED:', err);
+      }
+    }, totalTime);
+
+    // Store skip function via ref so the UI button can call it
+    skipRef.current = () => {
+      clearTimeout(timer);
+      try {
+        const newState = applyRaceResult(game, result, race);
+        setCompletedRaces((prev) => [...prev, result]);
+        setLiveEvents([]);
+        setShowSkip(false);
+        playFinish();
+        updateGame(newState);
+      } catch (err) {
+        logDebug('RaceLive: skip-apply FAILED', { error: String(err) });
+      }
+    };
+    if (isLong) setShowSkip(true);
+
+    return () => {
+      logDebug('RaceLive: effect cleanup — clearing timeout', { raceId: race.id });
+      clearTimeout(timer);
+    };
   }, [activeRaces, game, updateGame, playEngine, playCrash, playFinish, logDebug]);
 
   if (activeRaces.length === 0 && completedRaces.length === 0) {
@@ -129,7 +155,17 @@ export function RaceLive() {
       {/* Active race info */}
       {activeRaces.length > 0 && (
         <div className="bg-midnight border border-neon-pink/30 rounded p-4">
-          <div className="text-sm text-neon-pink">Race in progress...</div>
+          <div className="flex justify-between items-center">
+            <div className="text-sm text-neon-pink">Race in progress...</div>
+            {showSkip && (
+              <button
+                onClick={() => skipRef.current?.()}
+                className="text-[10px] px-2 py-1 bg-neon-amber/20 text-neon-amber rounded hover:bg-neon-amber/30"
+              >
+                Skip →
+              </button>
+            )}
+          </div>
           <div className="text-xs text-gray-500 mt-1">
             District: {game.districts[activeRaces[0].districtId]?.name} · Stakes: {activeRaces[0].stakes}
           </div>

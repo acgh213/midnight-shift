@@ -17,7 +17,9 @@ export function RaceSetup() {
   const [selectedCar, setSelectedCar] = useState(cars[0]?.id ?? '');
   const [stakes, setStakes] = useState<Stakes>('low');
   const [posture, setPosture] = useState<Posture>('safe');
-  const [started, setStarted] = useState(false);
+  const [lastStarted, setLastStarted] = useState<string | null>(null);
+
+  const activeCount = game.activeRaces.length;
 
   const handleStart = () => {
     if (!selectedDriver || !selectedCar) return;
@@ -50,11 +52,7 @@ export function RaceSetup() {
       carIds: race.playerCarIds,
       activeCount: game.activeRaces.length + 1,
     });
-    setStarted(true);
-    setTimeout(() => {
-      setScreen('race-live');
-      setStarted(false);
-    }, 600);
+    setLastStarted(race.id);
   };
 
   if (drivers.length === 0 || cars.length === 0) {
@@ -82,7 +80,30 @@ export function RaceSetup() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl text-neon-cyan tracking-wide">Set Up Race</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl text-neon-cyan tracking-wide">Set Up Race</h1>
+        {activeCount > 0 && (
+          <button
+            onClick={() => setScreen('race-live')}
+            className="text-xs px-3 py-1 bg-neon-pink/20 text-neon-pink rounded hover:bg-neon-pink/30"
+          >
+            View {activeCount} active →
+          </button>
+        )}
+      </div>
+
+      {/* Just-started confirmation */}
+      {lastStarted && (
+        <div className="bg-green-500/10 border border-green-500/30 rounded p-3 flex items-center justify-between">
+          <span className="text-xs text-green-400">Race queued! {activeCount} active</span>
+          <button
+            onClick={() => setLastStarted(null)}
+            className="text-gray-500 hover:text-gray-300 text-xs"
+          >
+            ✕
+          </button>
+        </div>
+      )}
 
       {/* District selection */}
       <div>
@@ -188,15 +209,15 @@ export function RaceSetup() {
       {/* Start button */}
       <button
         onClick={handleStart}
-        disabled={!selectedDriver || !selectedCar || started}
-        className={`w-full py-3 font-bold rounded transition-all ${
-          started
-            ? 'bg-green-600 text-white'
-            : 'bg-neon-pink text-black hover:bg-neon-pink/80 disabled:opacity-30 disabled:cursor-not-allowed'
-        }`}
+        disabled={!selectedDriver || !selectedCar}
+        className="w-full py-3 font-bold rounded bg-neon-pink text-black hover:bg-neon-pink/80 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
       >
-        {started ? 'Race Started! →' : 'Start Race'}
+        {activeCount > 0 ? `Start Race (${activeCount} active)` : 'Start Race'}
       </button>
+
+      <p className="text-[9px] text-gray-600 text-center">
+        Queue multiple races — visit Race Live to watch them unfold.
+      </p>
     </div>
   );
 }
