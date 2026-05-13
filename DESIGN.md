@@ -137,26 +137,26 @@ Background characters: mechanics, parts dealers, info brokers, club owners. The 
 
 ## Features by Priority
 
-### Must Have (v0)
-- [ ] Crew management (recruit, assign, view stats)
-- [ ] Garage (buy cars, upgrade parts)
-- [ ] Race simulation (time-step, with narrative output)
-- [ ] City map with 3+ districts
-- [ ] Idle progression (races run on timers, crew earns passive income)
-- [ ] Prestige system (New Night)
-- [ ] Save/load (localStorage)
-- [ ] Message Board (generated flavor text based on race outcomes)
+### Must Have (v0) ✅
+- [x] Crew management (recruit, assign, view stats)
+- [x] Garage (buy cars, upgrade parts)
+- [x] Race simulation (time-step, with narrative output)
+- [x] City map with 3+ districts (6 districts)
+- [x] Idle progression (races run on timers, crew earns passive income)
+- [x] Prestige system (New Night)
+- [x] Save/load (localStorage + server-side Go/SQLite)
+- [x] Message Board (generated flavor text based on race outcomes)
 
-### Should Have
-- [ ] Driver personalities, rivalries, loyalty
-- [ ] Visual customization (paint, decals, neon)
-- [ ] Rival crew AI (they challenge you, they upgrade their cars)
-- [ ] Special events (midnight tournaments, police crackdowns, street takeovers)
-- [ ] Sound (ambient synth, engine sounds for race replay)
+### Should Have ✅
+- [x] Driver personalities, rivalries, loyalty
+- [x] Visual customization (paint, decals, neon)
+- [x] Rival crew AI (they challenge you, they upgrade their cars)
+- [x] Special events (midnight tournaments, police crackdowns, street takeovers)
+- [x] Sound (procedural Web Audio engine + crash + victory)
 
 ### Nice to Have
-- [ ] Multiplayer (crew vs crew, shared city state)
-- [ ] Mobile app / PWA
+- [x] PWA (installable, service worker, offline-capable)
+- [ ] Multiplayer (crew vs crew, shared city state — partial: leaderboard + SSE crew challenges)
 - [ ] Car trading between players
 - [ ] Race replay viewer (animated top-down)
 - [ ] Seasonal events (snow conditions, monsoon season)
