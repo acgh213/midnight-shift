@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useGameStore } from '../../state/store';
 import type { RaceResult, RaceEvent } from '../../types/game';
 import { simulateRace } from '../../engine/simulator';
+import { applyRaceResult } from '../../engine/economy';
 
 export function RaceLive() {
   const game = useGameStore((s) => s.game);
@@ -25,13 +26,9 @@ export function RaceLive() {
       const totalTime = race.length === '5m' ? 3000 : 5000; // speed up for demo
       const timer = setTimeout(() => {
         setCompletedRaces((prev) => [...prev, result]);
-        const newRaces = activeRaces.filter((r) => r.id !== race.id);
         setLiveEvents([]);
-        updateGame({
-          activeRaces: newRaces,
-          raceResults: { ...game.raceResults, [result.raceId]: result },
-          completedRaceIds: [...game.completedRaceIds, result.raceId],
-        });
+        const updatedState = applyRaceResult(game, result, race);
+        updateGame(updatedState);
       }, totalTime);
 
       return () => clearTimeout(timer);
