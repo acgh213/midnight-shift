@@ -15,8 +15,10 @@ import { Settings } from './components/screens/Settings';
 import { RaceSetup } from './components/screens/RaceSetup';
 import { RaceLive } from './components/screens/RaceLive';
 import { Prestige } from './components/screens/Prestige';
+import { Leaderboard } from './components/screens/Leaderboard';
 import { PathSelect } from './components/screens/PathSelect';
 import { Navigation } from './components/layout/Navigation';
+import { useSSE } from './hooks/useSSE';
 
 const CREW_NAME = 'Midnight Crew';
 const SAVE_ID = 'default';
@@ -29,6 +31,9 @@ export default function App() {
   const crtEnabled = game.settings.crtScanlines;
   const gameRef = useRef(game);
   gameRef.current = game;
+
+  // Live SSE connection for leaderboard + events
+  useSSE();
 
   // Load save + process idle catchup on mount
   useEffect(() => {
@@ -98,6 +103,8 @@ export default function App() {
         return <RaceLive />;
       case 'prestige':
         return <Prestige />;
+      case 'leaderboard':
+        return <Leaderboard />;
       case 'path-select':
         return <PathSelect />;
       case 'more':
