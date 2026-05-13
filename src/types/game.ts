@@ -181,6 +181,7 @@ export interface RaceResult {
   rewards: RaceRewards;
   driverStatChanges: Record<string, Partial<DriverStats>>;
   districtControlChange: number;
+  narrative?: string;
 }
 
 export interface RaceEvent {

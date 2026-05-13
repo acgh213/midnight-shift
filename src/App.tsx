@@ -1,6 +1,7 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useGameStore } from './state/store';
-import { loadGame } from './state/persistence';
+import { loadGame, saveGame } from './state/persistence';
+import { processIdleCatchup } from './engine/idle';
 import { CityMap } from './components/screens/CityMap';
 import { Garage } from './components/screens/Garage';
 import { CarMarket } from './components/screens/CarMarket';
@@ -19,12 +20,39 @@ import { Navigation } from './components/layout/Navigation';
 export default function App() {
   const currentScreen = useGameStore((s) => s.currentScreen);
   const setScreen = useGameStore((s) => s.setScreen);
+  const game = useGameStore((s) => s.game);
   const loadGameState = useGameStore((s) => s.loadGame);
-  const crtEnabled = useGameStore((s) => s.game.settings.crtScanlines);
+  const crtEnabled = game.settings.crtScanlines;
+  const gameRef = useRef(game);
+  gameRef.current = game;
 
+  // Load save + process idle catchup on mount
   useEffect(() => {
     const saved = loadGame();
-    if (saved) loadGameState(saved);
+    if (saved) {
+      // Process idle catchup — rivals evolve, events fire, earnings accumulate
+      const now = Date.now();
+      const { updatedState } = processIdleCatchup(saved, now);
+      loadGameState(updatedState);
+      saveGame(updatedState);
+    }
+  }, []);
+
+  // Auto-save every 30 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      saveGame(gameRef.current);
+    }, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Save on tab close / refresh
+  useEffect(() => {
+    const handleUnload = () => {
+      saveGame(gameRef.current);
+    };
+    window.addEventListener('beforeunload', handleUnload);
+    return () => window.removeEventListener('beforeunload', handleUnload);
   }, []);
 
   const renderScreen = () => {
@@ -56,7 +84,7 @@ export default function App() {
       case 'path-select':
         return <PathSelect />;
       case 'more':
-        return null; // handled by Navigation sheet
+        return null;
       default:
         return <CityMap />;
     }

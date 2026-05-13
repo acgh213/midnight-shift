@@ -102,6 +102,9 @@ export function RaceLive() {
         return (
           <div key={result.raceId} className="bg-midnight border border-neon-cyan/30 rounded p-4">
             <h2 className="text-lg font-bold text-neon-cyan">Race Complete</h2>
+            {result.narrative && (
+              <p className="text-sm text-gray-300 mt-1 italic leading-relaxed">{result.narrative}</p>
+            )}
             <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
               <div>
                 <span className="text-gray-500">Result: </span>
