@@ -1,0 +1,48 @@
+@import "tailwindcss";
+
+@theme {
+  --color-neon-pink: #ff2d95;
+  --color-neon-cyan: #00d4ff;
+  --color-neon-purple: #b347ea;
+  --color-neon-amber: #ffb800;
+  --color-asphalt: #0a0a0f;
+  --color-pavement: #14141f;
+  --color-midnight: #1a1a2e;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background-color: var(--color-asphalt);
+  color: #e0e0e0;
+  font-family: 'Courier New', monospace;
+  margin: 0;
+  padding: 0;
+}
+
+/* CRT scanlines overlay - toggleable */
+.crt-scanlines::after {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0,0,0,0.06) 0px,
+    rgba(0,0,0,0.06) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* Terminal-style text selection */
+::selection {
+  background: var(--color-neon-pink);
+  color: #000;
+}
