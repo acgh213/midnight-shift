@@ -6,6 +6,7 @@ import { Garage } from './components/screens/Garage';
 import { CarMarket } from './components/screens/CarMarket';
 import { CrewRoster } from './components/screens/CrewRoster';
 import { Junkyard } from './components/screens/Junkyard';
+import { Customization } from './components/screens/Customization';
 import { MessageBoard } from './components/screens/MessageBoard';
 import { Settings } from './components/screens/Settings';
 import { RaceSetup } from './components/screens/RaceSetup';
@@ -37,6 +38,8 @@ export default function App() {
         return <CrewRoster />;
       case 'junkyard':
         return <Junkyard />;
+      case 'customization':
+        return <Customization />;
       case 'message-board':
         return <MessageBoard />;
       case 'settings':

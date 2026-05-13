@@ -9,6 +9,7 @@ const NAV_ITEMS: { screen: ScreenId; label: string }[] = [
   { screen: 'city-map', label: 'City' },
   { screen: 'garage', label: 'Garage' },
   { screen: 'car-market', label: 'Market' },
+  { screen: 'customization', label: 'Custom' },
   { screen: 'crew-roster', label: 'Crew' },
   { screen: 'junkyard', label: 'Yard' },
   { screen: 'race-setup', label: 'Race' },

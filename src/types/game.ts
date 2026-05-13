@@ -218,6 +218,7 @@ export type ScreenId =
   | 'car-market'
   | 'crew-roster'
   | 'driver-detail'
+  | 'customization'
   | 'race-setup'
   | 'race-live'
   | 'race-highlights'

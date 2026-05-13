@@ -8,7 +8,16 @@ export function Garage() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl text-neon-cyan tracking-wide">Garage</h1>
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl text-neon-cyan tracking-wide">Garage</h1>
+        <button
+          onClick={() => setScreen('car-market')}
+          className="text-xs px-3 py-1 rounded border border-neon-cyan/30 text-neon-cyan hover:bg-neon-cyan/10"
+        >
+          Buy Cars
+        </button>
+      </div>
+
       {cars.length === 0 ? (
         <div className="bg-midnight border border-neon-cyan/20 rounded p-6 text-center">
           <p className="text-gray-500 text-sm">No cars in your garage yet.</p>
@@ -23,7 +32,15 @@ export function Garage() {
       ) : (
         <div className="grid gap-3">
           {cars.map((car) => (
-            <CarCard key={car.id} car={car} />
+            <div key={car.id}>
+              <CarCard car={car} />
+              <button
+                onClick={() => setScreen('customization')}
+                className="mt-1 w-full py-1.5 text-xs text-neon-cyan border border-neon-cyan/20 rounded hover:bg-neon-cyan/10 transition-colors"
+              >
+                Customize
+              </button>
+            </div>
           ))}
         </div>
       )}
