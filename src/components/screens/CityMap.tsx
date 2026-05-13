@@ -1,4 +1,5 @@
 import { useGameStore } from '../../state/store';
+import { generateBossVision } from '../../engine/paths';
 import { useDistricts, usePlayerCars, usePlayerDrivers } from '../../hooks/useGame';
 import { participateInEvent } from '../../engine/events';
 import type { DistrictId } from '../../types/game';
@@ -7,6 +8,9 @@ export function CityMap() {
   const districts = useDistricts();
   const setScreen = useGameStore((s) => s.setScreen);
   const game = useGameStore((s) => s.game);
+  const bossVision = game.playerPath === 'boss'
+    ? generateBossVision(game.crews, game.districts, game.economy.rep, game.night)
+    : null;
   const updateGame = useGameStore((s) => s.updateGame);
   const activeRaces = game.activeRaces;
   const crews = game.crews;
@@ -70,6 +74,36 @@ export function CityMap() {
           <span className="text-gray-300">{cars.length}</span>
         </div>
       </div>
+
+      {/* Boss Vision */}
+      {bossVision && bossVision.length > 0 && (
+        <div className="bg-midnight border border-neon-pink/20 rounded p-3">
+          <h2 className="text-xs text-neon-pink uppercase tracking-wider mb-2">Boss Vision</h2>
+          <div className="space-y-2">
+            {bossVision.slice(0, 4).map((v) => (
+              <div key={v.districtId} className="flex items-center justify-between text-xs">
+                <span className="text-gray-400 w-28 truncate">
+                  {game.districts[v.districtId]?.name ?? v.districtId}
+                </span>
+                <div className="flex items-center gap-2">
+                  <div className="w-20 h-2 bg-gray-800 rounded-full overflow-hidden">
+                    <div className="h-full rounded-full transition-all" style={{
+                      width: `${v.heatLevel}%`,
+                      background: v.heatLevel > 70 ? '#ef4444' : v.heatLevel > 40 ? '#f59e0b' : '#22c55e',
+                    }} />
+                  </div>
+                  <span className="text-gray-500 w-8 text-right text-[10px]">
+                    {v.heatLevel}%
+                  </span>
+                  {v.nextChallengeIn < 2 && (
+                    <span className="text-red-400 text-[10px]">⚠ soon</span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* City Events */}
       {events.filter((e) => !e.resolved).length > 0 && (

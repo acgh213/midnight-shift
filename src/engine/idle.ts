@@ -1,5 +1,7 @@
 import type { GameState, GameEvent } from '../types/game';
 import { calculateIdleEarnings } from './economy';
+import { crewOrderIncome } from './paths';
+import { simulateRace } from './simulator';
 import { processRivalAI } from './rival-ai';
 import { generateSpecialEvents } from './events';
 
@@ -41,6 +43,22 @@ export function processIdleCatchup(state: GameState, now: number = Date.now()): 
     ...updatedState.crews.player,
     cash: updatedState.crews.player.cash + earnings.cash,
   };
+
+  // Boss path: crew orders generate passive income
+  if (updatedState.playerPath === 'boss') {
+    const idleDrivers = updatedState.crews.player.drivers
+      .map((id) => updatedState.drivers[id])
+      .filter((d) => d && !d.isSignature);
+    if (idleDrivers.length > 0) {
+      const avgQuality = idleDrivers.reduce((sum, d) => {
+        const stats = d.stats;
+        return sum + (stats.speed + stats.control + stats.aggression + stats.reputation) / 400;
+      }, 0) / idleDrivers.length;
+      const orderCash = crewOrderIncome(idleDrivers.length, avgQuality);
+      updatedState.economy.cash += orderCash;
+      updatedState.crews.player.cash += orderCash;
+    }
+  }
   updatedState.lastSaveTime = now;
 
   // Process rival AI — rivals make moves while you're away
@@ -59,9 +77,80 @@ export function processIdleCatchup(state: GameState, now: number = Date.now()): 
     .map((e) => (e.expiresAt < now ? { ...e, resolved: true, result: 'Event expired while you were away.' } : e));
   updatedState.specialEvents = [...existingEvents, ...specialEvents].slice(0, 10);
 
-  // Count completed offline races
+  // Simulate completed offline races
   const completedOffline = state.activeRaces.filter(
     (race) => race.endTime <= now
+  );
+
+  // Actually run the simulator for completed races
+  for (const race of completedOffline) {
+    const district = updatedState.districts[race.districtId];
+    if (!district) continue;
+
+    const result = simulateRace(
+      race,
+      updatedState.drivers,
+      updatedState.cars,
+      district,
+    );
+
+    // Apply rewards
+    updatedState.economy = {
+      ...updatedState.economy,
+      cash: updatedState.economy.cash + result.rewards.cash,
+      rep: updatedState.economy.rep + result.rewards.rep,
+      info: updatedState.economy.info + result.rewards.info,
+      parts: [...updatedState.economy.parts, ...result.rewards.parts],
+    };
+
+    // Apply driver stat changes
+    if (result.driverStatChanges) {
+      updatedState.drivers = { ...updatedState.drivers };
+      for (const [driverId, changes] of Object.entries(result.driverStatChanges)) {
+        if (updatedState.drivers[driverId]) {
+          updatedState.drivers[driverId] = {
+            ...updatedState.drivers[driverId],
+            stats: {
+              ...updatedState.drivers[driverId].stats,
+              ...changes,
+            },
+          };
+        }
+      }
+    }
+
+    // Apply district control change
+    if (race.districtId && updatedState.districts[race.districtId]) {
+      updatedState.districts = { ...updatedState.districts };
+      updatedState.districts[race.districtId] = {
+        ...updatedState.districts[race.districtId],
+        controlPercent: Math.min(100, Math.max(0,
+          updatedState.districts[race.districtId].controlPercent + result.districtControlChange
+        )),
+      };
+    }
+
+    // Car condition wear
+    for (const carId of race.playerCarIds) {
+      if (updatedState.cars[carId]) {
+        updatedState.cars[carId] = {
+          ...updatedState.cars[carId],
+          condition: Math.max(0, updatedState.cars[carId].condition - 5),
+        };
+      }
+    }
+
+    // Record result
+    updatedState.raceResults = {
+      ...updatedState.raceResults,
+      [result.raceId]: result,
+    };
+    updatedState.completedRaceIds = [...updatedState.completedRaceIds, result.raceId];
+  }
+
+  // Clean up completed races from active list
+  updatedState.activeRaces = updatedState.activeRaces.filter(
+    (race) => race.endTime > now
   );
 
   return {

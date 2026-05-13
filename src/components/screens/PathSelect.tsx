@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useGameStore } from '../../state/store';
 import type { PlayerPath } from '../../types/game';
+import { racerSignatureBonus } from '../../engine/paths';
 
 interface PathOption {
   id: PlayerPath;
@@ -48,7 +49,36 @@ export function PathSelect() {
   const [confirmed, setConfirmed] = useState(false);
 
   const handleConfirm = () => {
-    updateGame({ playerPath: selected });
+    const updates: Partial<typeof game> = { playerPath: selected };
+
+    // Apply Racer stat bonus to the crew leader (first driver)
+    if (selected === 'racer') {
+      const playerDriverIds = game.crews.player.drivers;
+      if (playerDriverIds.length > 0) {
+        const leaderId = playerDriverIds[0];
+        const leader = game.drivers[leaderId];
+        if (leader) {
+          const boostedStats = racerSignatureBonus(leader.stats);
+          updates.drivers = {
+            ...game.drivers,
+            [leaderId]: {
+              ...leader,
+              stats: boostedStats,
+              isSignature: true,
+            },
+          };
+          updates.crews = {
+            ...game.crews,
+            player: {
+              ...game.crews.player,
+              leaderId,
+            },
+          };
+        }
+      }
+    }
+
+    updateGame(updates as any);
     setConfirmed(true);
     setTimeout(() => setScreen('city-map'), 1500);
   };

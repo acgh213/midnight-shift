@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { useGameStore } from '../../state/store';
+import { bossRecruitDiscount } from '../../engine/paths';
 import { useEconomy, usePlayerCrew } from '../../hooks/useGame';
 import { generateDriver } from '../../generators/drivers';
 import type { Driver, CarArchetype } from '../../types/game';
@@ -9,9 +10,11 @@ const CANDIDATE_COUNT = 3;
 const REFRESH_COST = 50; // info cost to refresh candidates
 const BASE_HIRE_COST = 150;
 
-function driverCost(driver: Driver): number {
+function driverCost(driver: Driver, isBoss?: boolean, hasUnderground?: boolean): number {
   const avgStats = (driver.stats.speed + driver.stats.control + driver.stats.aggression + driver.stats.reputation) / 4;
-  return Math.round(BASE_HIRE_COST + avgStats * 3 + driver.loyalty * 0.5);
+  const baseCost = Math.round(BASE_HIRE_COST + avgStats * 3 + driver.loyalty * 0.5);
+  if (isBoss) return bossRecruitDiscount(baseCost, hasUnderground ?? false);
+  return baseCost;
 }
 
 export function Junkyard() {
@@ -38,7 +41,9 @@ export function Junkyard() {
   }, [economy, updateGame]);
 
   const hire = useCallback((driver: Driver) => {
-    const cost = driverCost(driver);
+    const isBoss = game.playerPath === 'boss';
+    const hasUnderground = (game.districts.underground?.controlPercent ?? 0) >= 50;
+    const cost = driverCost(driver, isBoss, hasUnderground);
     if (economy.cash < cost) {
       setFeedback(`Not enough cash. Hiring ${driver.name} costs $${cost}.`);
       return;
@@ -91,7 +96,9 @@ export function Junkyard() {
 
       <div className="grid gap-3">
         {candidates.map((driver) => {
-          const cost = driverCost(driver);
+          const isBoss2 = game.playerPath === 'boss';
+          const hasUnderground2 = (game.districts.underground?.controlPercent ?? 0) >= 50;
+          const cost = driverCost(driver, isBoss2, hasUnderground2);
           const canAfford = economy.cash >= cost;
           return (
             <div key={driver.id} className="bg-midnight border border-neon-cyan/20 rounded overflow-hidden">
