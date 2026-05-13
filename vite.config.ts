@@ -33,5 +33,11 @@ export default defineConfig({
   ],
   server: {
     allowedHosts: ['hermes-sera.exe.xyz'],
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+      },
+    },
   },
 })

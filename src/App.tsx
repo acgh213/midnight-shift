@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useGameStore } from './state/store';
 import { loadGame, saveGame } from './state/persistence';
+import { serverSave, serverLoad } from './state/serverPersistence';
 import { processIdleCatchup } from './engine/idle';
 import { CityMap } from './components/screens/CityMap';
 import { Garage } from './components/screens/Garage';
@@ -17,6 +18,9 @@ import { Prestige } from './components/screens/Prestige';
 import { PathSelect } from './components/screens/PathSelect';
 import { Navigation } from './components/layout/Navigation';
 
+const CREW_NAME = 'Midnight Crew';
+const SAVE_ID = 'default';
+
 export default function App() {
   const currentScreen = useGameStore((s) => s.currentScreen);
   const setScreen = useGameStore((s) => s.setScreen);
@@ -28,20 +32,30 @@ export default function App() {
 
   // Load save + process idle catchup on mount
   useEffect(() => {
-    const saved = loadGame();
-    if (saved) {
-      // Process idle catchup — rivals evolve, events fire, earnings accumulate
-      const now = Date.now();
-      const { updatedState } = processIdleCatchup(saved, now);
-      loadGameState(updatedState);
-      saveGame(updatedState);
-    }
+    const load = async () => {
+      // Try server first, fall back to localStorage
+      let saved = await serverLoad(SAVE_ID);
+      if (!saved) {
+        saved = loadGame();
+      }
+      if (saved) {
+        const now = Date.now();
+        const { updatedState } = processIdleCatchup(saved, now);
+        loadGameState(updatedState);
+        saveGame(updatedState);
+        // Sync back to server
+        serverSave(updatedState, SAVE_ID, CREW_NAME);
+      }
+    };
+    load();
   }, []);
 
   // Auto-save every 30 seconds
   useEffect(() => {
     const interval = setInterval(() => {
-      saveGame(gameRef.current);
+      const state = gameRef.current;
+      saveGame(state);
+      serverSave(state, SAVE_ID, CREW_NAME);
     }, 30000);
     return () => clearInterval(interval);
   }, []);
@@ -49,7 +63,10 @@ export default function App() {
   // Save on tab close / refresh
   useEffect(() => {
     const handleUnload = () => {
-      saveGame(gameRef.current);
+      const state = gameRef.current;
+      saveGame(state);
+      // Fire-and-forget server save
+      navigator.sendBeacon?.('/api/save?id=' + SAVE_ID + '&crew=' + encodeURIComponent(CREW_NAME), JSON.stringify(state));
     };
     window.addEventListener('beforeunload', handleUnload);
     return () => window.removeEventListener('beforeunload', handleUnload);
