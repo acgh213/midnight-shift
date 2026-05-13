@@ -10,6 +10,7 @@ export function RaceLive() {
   const updateGame = useGameStore((s) => s.updateGame);
   const logDebug = useGameStore((s) => s.logDebug);
   const setScreen = useGameStore((s) => s.setScreen);
+  const currentScreen = useGameStore((s) => s.currentScreen);
   const activeRaces = game.activeRaces;
   const [liveEvents, setLiveEvents] = useState<RaceEvent[]>([]);
   const [completedRaces, setCompletedRaces] = useState<RaceResult[]>([]);
