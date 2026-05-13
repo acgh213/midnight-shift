@@ -1,0 +1,163 @@
+import type { Car } from '../../types/game';
+
+// 6 signature cars + 9 additional hero cars = 15 total
+
+export const heroCars: Car[] = [
+  // === JDM Tuners ===
+  {
+    id: 'midnight-sparrow',
+    name: 'Midnight Sparrow',
+    archetype: 'jdm-tuner',
+    class: 'C',
+    stats: { topSpeed: 60, control: 65, aggression: 45, durability: 70 },
+    parts: { engine: null, tires: null, suspension: null, nitro: null, aero: null },
+    condition: 100,
+    cosmetics: { paint: '#ffff00', decals: [], neonColor: '', bodyKit: '', plate: '' },
+    isSignature: false,
+    ownerId: 'player',
+    assignedDriverId: null,
+  },
+  {
+    id: 'shadow-line',
+    name: 'Shadow Line',
+    archetype: 'jdm-tuner',
+    class: 'B',
+    stats: { topSpeed: 75, control: 70, aggression: 50, durability: 65 },
+    parts: { engine: null, tires: null, suspension: null, nitro: null, aero: null },
+    condition: 100,
+    cosmetics: { paint: '#333333', decals: [], neonColor: '#ff2d95', bodyKit: '', plate: '' },
+    isSignature: false,
+    ownerId: 'player',
+    assignedDriverId: null,
+  },
+  {
+    id: 'redline-king',
+    name: 'Redline King',
+    archetype: 'jdm-tuner',
+    class: 'A',
+    stats: { topSpeed: 85, control: 60, aggression: 70, durability: 55 },
+    parts: { engine: null, tires: null, suspension: null, nitro: null, aero: null },
+    condition: 100,
+    cosmetics: { paint: '#cc0000', decals: [], neonColor: '', bodyKit: '', plate: '' },
+    isSignature: false,
+    ownerId: 'player',
+    assignedDriverId: null,
+  },
+
+  // === Euro Precision ===
+  {
+    id: 'blue-alpine',
+    name: 'Blue Alpine',
+    archetype: 'euro-precision',
+    class: 'C',
+    stats: { topSpeed: 55, control: 75, aggression: 30, durability: 60 },
+    parts: { engine: null, tires: null, suspension: null, nitro: null, aero: null },
+    condition: 100,
+    cosmetics: { paint: '#1a3a5c', decals: [], neonColor: '', bodyKit: '', plate: '' },
+    isSignature: false,
+    ownerId: 'player',
+    assignedDriverId: null,
+  },
+  {
+    id: 'strasse-ghost',
+    name: 'Strasse Ghost',
+    archetype: 'euro-precision',
+    class: 'B',
+    stats: { topSpeed: 70, control: 80, aggression: 35, durability: 55 },
+    parts: { engine: null, tires: null, suspension: null, nitro: null, aero: null },
+    condition: 100,
+    cosmetics: { paint: '#e8e8e8', decals: [], neonColor: '#00d4ff', bodyKit: '', plate: '' },
+    isSignature: false,
+    ownerId: 'player',
+    assignedDriverId: null,
+  },
+
+  // === American Muscle ===
+  {
+    id: 'detroit-hammer',
+    name: 'Detroit Hammer',
+    archetype: 'american-muscle',
+    class: 'C',
+    stats: { topSpeed: 65, control: 40, aggression: 75, durability: 80 },
+    parts: { engine: null, tires: null, suspension: null, nitro: null, aero: null },
+    condition: 100,
+    cosmetics: { paint: '#ff4400', decals: [], neonColor: '', bodyKit: '', plate: '' },
+    isSignature: false,
+    ownerId: 'player',
+    assignedDriverId: null,
+  },
+  {
+    id: 'thunderbird-77',
+    name: 'Thunderbird \'77',
+    archetype: 'american-muscle',
+    class: 'B',
+    stats: { topSpeed: 75, control: 45, aggression: 80, durability: 75 },
+    parts: { engine: null, tires: null, suspension: null, nitro: null, aero: null },
+    condition: 100,
+    cosmetics: { paint: '#ffd700', decals: [], neonColor: '#ff4400', bodyKit: '', plate: '' },
+    isSignature: false,
+    ownerId: 'player',
+    assignedDriverId: null,
+  },
+
+  // === Kei Special ===
+  {
+    id: 'pixel-racer',
+    name: 'Pixel Racer',
+    archetype: 'kei-special',
+    class: 'C',
+    stats: { topSpeed: 45, control: 80, aggression: 40, durability: 55 },
+    parts: { engine: null, tires: null, suspension: null, nitro: null, aero: null },
+    condition: 100,
+    cosmetics: { paint: '#00ff88', decals: [], neonColor: '', bodyKit: '', plate: '' },
+    isSignature: false,
+    ownerId: 'player',
+    assignedDriverId: null,
+  },
+  {
+    id: 'bento-box',
+    name: 'Bento Box',
+    archetype: 'kei-special',
+    class: 'B',
+    stats: { topSpeed: 50, control: 85, aggression: 50, durability: 50 },
+    parts: { engine: null, tires: null, suspension: null, nitro: null, aero: null },
+    condition: 100,
+    cosmetics: { paint: '#ff69b4', decals: [], neonColor: '#b347ea', bodyKit: '', plate: '' },
+    isSignature: false,
+    ownerId: 'player',
+    assignedDriverId: null,
+  },
+
+  // === Rally Hybrid ===
+  {
+    id: 'gravel-dancer',
+    name: 'Gravel Dancer',
+    archetype: 'rally-hybrid',
+    class: 'C',
+    stats: { topSpeed: 55, control: 70, aggression: 55, durability: 75 },
+    parts: { engine: null, tires: null, suspension: null, nitro: null, aero: null },
+    condition: 100,
+    cosmetics: { paint: '#8b4513', decals: [], neonColor: '', bodyKit: '', plate: '' },
+    isSignature: false,
+    ownerId: 'player',
+    assignedDriverId: null,
+  },
+  {
+    id: 'mud-wasp',
+    name: 'Mud Wasp',
+    archetype: 'rally-hybrid',
+    class: 'B',
+    stats: { topSpeed: 65, control: 75, aggression: 60, durability: 70 },
+    parts: { engine: null, tires: null, suspension: null, nitro: null, aero: null },
+    condition: 100,
+    cosmetics: { paint: '#ffa500', decals: [], neonColor: '#ffb800', bodyKit: '', plate: '' },
+    isSignature: false,
+    ownerId: 'player',
+    assignedDriverId: null,
+  },
+];
+
+/** Get player-purchasable hero cars (excluding signature cars) */
+export function getHeroCars(): Car[] {
+  return heroCars.map((c) => ({ ...c, id: `hero-${c.id}-${Date.now()}` }));
+}
