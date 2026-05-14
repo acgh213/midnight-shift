@@ -10,52 +10,38 @@ export function RaceLive() {
   const updateGame = useGameStore((s) => s.updateGame);
   const logDebug = useGameStore((s) => s.logDebug);
   const setScreen = useGameStore((s) => s.setScreen);
-  const currentScreen = useGameStore((s) => s.currentScreen);
   const activeRaces = game.activeRaces;
+  const currentRaceId = activeRaces[0]?.id ?? null;
   const [liveEvents, setLiveEvents] = useState<RaceEvent[]>([]);
   const [completedRaces, setCompletedRaces] = useState<RaceResult[]>([]);
   const [showSkip, setShowSkip] = useState(false);
-  const skipRef = useRef<(() => void) | null>(null);
+  const skipFnRef = useRef<(() => void) | null>(null);
+  const gameRef = useRef(game);
+  gameRef.current = game;
   const { playEngine, playCrash, playFinish } = useAudio();
 
-  // Track which dependency triggered the effect re-run
-  const prevDeps = useRef<Record<string, unknown>>({});
-  const depValues = { activeRaces: activeRaces.length, gameCash: game.economy.cash, gameRef: game };
-  const changedDeps: string[] = [];
-  for (const [k, v] of Object.entries(depValues)) {
-    if (prevDeps.current[k] !== v) changedDeps.push(k);
-  }
-  prevDeps.current = depValues;
-
   useEffect(() => {
-    logDebug(`RaceLive:useEffect triggered (changed: ${changedDeps.join(', ') || 'mount'})`, { activeRacesCount: activeRaces.length });
-
-    // Separate unmount tracker
-    return () => {
-      logDebug('RaceLive: component UNMOUNTING');
-    };
-  }, []);
-
-  useEffect(() => {
-
-    if (activeRaces.length === 0) {
-      logDebug('RaceLive: no active races, returning');
+    if (!currentRaceId) {
+      logDebug('RaceLive: no active races');
       return;
     }
 
-    const race = activeRaces[0];
+    // Read everything from the ref so the effect doesn't depend on `game` or `activeRaces`
+    const currentGame = gameRef.current;
+    const races = currentGame.activeRaces;
+    const race = races[0];
+    if (!race || race.id !== currentRaceId) return;
+
     logDebug('RaceLive: processing race', { raceId: race.id, stakes: race.stakes, length: race.length, district: race.districtId });
 
-    const district = game.districts[race.districtId];
+    const district = currentGame.districts[race.districtId];
     if (!district) {
-      logDebug('RaceLive: district not found, aborting', { districtId: race.districtId });
+      logDebug('RaceLive: district not found', { districtId: race.districtId });
       return;
     }
 
-    logDebug('RaceLive: calling playEngine');
     playEngine();
 
-    // All race lengths are simulated inline — longer races get proportionally longer visual delays
     const delayMap: Record<string, number> = {
       '5m': 3000,
       '30m': 5000,
@@ -65,8 +51,8 @@ export function RaceLive() {
     const totalTime = delayMap[race.length] || 5000;
     const isLong = totalTime > 5000;
 
-    logDebug(`RaceLive: running simulation (delay: ${totalTime}ms)`, { length: race.length });
-    const result = simulateRace(race, game.drivers, game.cars, district);
+    logDebug(`RaceLive: simulating (delay: ${totalTime}ms)`, { length: race.length });
+    const result = simulateRace(race, currentGame.drivers, currentGame.cars, district);
     logDebug('RaceLive: simulation complete', {
       outcome: result.outcome,
       cash: result.rewards.cash,
@@ -79,43 +65,35 @@ export function RaceLive() {
     const hasCrash = result.events.some((e) => e.type === 'CRASH_OUT' || e.type === 'CRASH_RECOVER');
     if (hasCrash) setTimeout(() => playCrash(), 500);
 
-    logDebug('RaceLive: setting timeout', { totalTimeMs: totalTime, isLong });
+    if (isLong) setShowSkip(true);
 
-    // Allow skipping long race delays
-    let skipRef = { skipped: false };
     const timer = setTimeout(() => {
-      logDebug('RaceLive: timeout fired, applying result', { raceId: race.id });
+      logDebug('RaceLive: timeout fired', { raceId: race.id });
       try {
-        const newState = applyRaceResult(game, result, race);
+        const newState = applyRaceResult(currentGame, result, race);
         logDebug('RaceLive: applyRaceResult SUCCESS', {
           outcome: result.outcome,
-          cashBefore: game.economy.cash,
+          cashBefore: currentGame.economy.cash,
           cashAfter: newState.economy.cash,
-          districtBefore: game.districts[race.districtId]?.controlPercent,
-          districtAfter: newState.districts[race.districtId]?.controlPercent,
-          completedBefore: game.completedRaceIds.length,
+          completedBefore: currentGame.completedRaceIds.length,
           completedAfter: newState.completedRaceIds.length,
-          activeBefore: game.activeRaces.length,
+          activeBefore: currentGame.activeRaces.length,
           activeAfter: newState.activeRaces.length,
         });
         setCompletedRaces((prev) => [...prev, result]);
         setLiveEvents([]);
         setShowSkip(false);
         playFinish();
-        logDebug('RaceLive: calling updateGame');
         updateGame(newState);
-        logDebug('RaceLive: updateGame returned');
       } catch (err) {
-        logDebug('RaceLive: applyRaceResult FAILED', { error: String(err), stack: (err as Error).stack });
-        console.error('[RaceLive] applyRaceResult FAILED:', err);
+        logDebug('RaceLive: applyRaceResult FAILED', { error: String(err) });
       }
     }, totalTime);
 
-    // Store skip function via ref so the UI button can call it
-    skipRef.current = () => {
+    skipFnRef.current = () => {
       clearTimeout(timer);
       try {
-        const newState = applyRaceResult(game, result, race);
+        const newState = applyRaceResult(currentGame, result, race);
         setCompletedRaces((prev) => [...prev, result]);
         setLiveEvents([]);
         setShowSkip(false);
@@ -125,13 +103,12 @@ export function RaceLive() {
         logDebug('RaceLive: skip-apply FAILED', { error: String(err) });
       }
     };
-    if (isLong) setShowSkip(true);
 
     return () => {
-      logDebug('RaceLive: effect cleanup — clearing timeout', { raceId: race.id });
+      logDebug('RaceLive: effect cleanup', { raceId: race.id });
       clearTimeout(timer);
     };
-  }, [activeRaces, game, updateGame, playEngine, playCrash, playFinish, logDebug]);
+  }, [currentRaceId, updateGame, logDebug, playEngine, playCrash, playFinish]);
 
   if (activeRaces.length === 0 && completedRaces.length === 0) {
     return (
@@ -152,14 +129,15 @@ export function RaceLive() {
     <div className="space-y-4">
       <h1 className="text-2xl text-neon-cyan tracking-wide">Race Live</h1>
 
-      {/* Active race info */}
       {activeRaces.length > 0 && (
         <div className="bg-midnight border border-neon-pink/30 rounded p-4">
           <div className="flex justify-between items-center">
-            <div className="text-sm text-neon-pink">Race in progress...</div>
+            <div className="text-sm text-neon-pink">
+              Race in progress... {activeRaces.length > 1 && `(${activeRaces.length - 1} queued)`}
+            </div>
             {showSkip && (
               <button
-                onClick={() => skipRef.current?.()}
+                onClick={() => skipFnRef.current?.()}
                 className="text-[10px] px-2 py-1 bg-neon-amber/20 text-neon-amber rounded hover:bg-neon-amber/30"
               >
                 Skip →
@@ -169,7 +147,6 @@ export function RaceLive() {
           <div className="text-xs text-gray-500 mt-1">
             District: {game.districts[activeRaces[0].districtId]?.name} · Stakes: {activeRaces[0].stakes}
           </div>
-          {/* Event log */}
           <div className="mt-3 space-y-1 max-h-64 overflow-y-auto font-mono text-xs">
             {liveEvents.map((event, i) => (
               <div key={i} className="text-gray-400">
@@ -196,7 +173,6 @@ export function RaceLive() {
         </div>
       )}
 
-      {/* Completed races */}
       {completedRaces.map((result) => {
         const driverId = game.drivers && Object.keys(game.drivers)[0];
         const driver = driverId ? game.drivers[driverId] : null;
