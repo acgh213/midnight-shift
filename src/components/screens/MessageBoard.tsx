@@ -1,6 +1,6 @@
 import { useGameStore } from '../../state/store';
 import { generatePosts, generateWelcomePosts } from '../../generators/message-board';
-import type { MessageBoardPost, GameEvent, GameState } from '../../types/game';
+import type { MessageBoardPost, GameEvent } from '../../types/game';
 import { useState, useEffect, useRef } from 'react';
 
 function eventToPost(event: GameEvent): MessageBoardPost {
