@@ -3,6 +3,8 @@ import { useGameStore } from './state/store';
 import { loadGame, saveGame } from './state/persistence';
 import { serverSave, serverLoad } from './state/serverPersistence';
 import { processIdleCatchup } from './engine/idle';
+import { simulateRace } from './engine/simulator';
+import { applyRaceResult } from './engine/economy';
 import { CityMap } from './components/screens/CityMap';
 import { Garage } from './components/screens/Garage';
 import { CarMarket } from './components/screens/CarMarket';
@@ -71,11 +73,39 @@ export default function App() {
     const handleUnload = () => {
       const state = gameRef.current;
       saveGame(state);
-      // Fire-and-forget server save
       navigator.sendBeacon?.('/api/save?id=' + SAVE_ID + '&crew=' + encodeURIComponent(CREW_NAME), JSON.stringify(state));
     };
     window.addEventListener('beforeunload', handleUnload);
     return () => window.removeEventListener('beforeunload', handleUnload);
+  }, []);
+
+  // Background race processing + save — runs every 5 seconds regardless of active screen
+  useEffect(() => {
+    const tick = () => {
+      const state = gameRef.current;
+      const now = Date.now();
+
+      // Find races whose endTime has passed
+      const completed = state.activeRaces.filter((r) => r.endTime <= now);
+      if (completed.length === 0) return;
+
+      let next = state;
+      for (const race of completed) {
+        const district = next.districts[race.districtId];
+        if (!district) continue;
+        const result = simulateRace(race, next.drivers, next.cars, district);
+        next = applyRaceResult(next, result, race);
+      }
+
+      // Persist to Zustand store
+      useGameStore.getState().loadGame(next);
+      // Save to localStorage + server
+      saveGame(next);
+      serverSave(next, SAVE_ID, CREW_NAME);
+    };
+
+    const interval = setInterval(tick, 5000);
+    return () => clearInterval(interval);
   }, []);
 
   const renderScreen = () => {
