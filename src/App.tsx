@@ -18,7 +18,6 @@ import { RaceSetup } from './components/screens/RaceSetup';
 import { RaceLive } from './components/screens/RaceLive';
 import { Prestige } from './components/screens/Prestige';
 import { Leaderboard } from './components/screens/Leaderboard';
-import { DebugScreen } from './components/screens/DebugScreen';
 import { PathSelect } from './components/screens/PathSelect';
 import { Navigation } from './components/layout/Navigation';
 import { useSSE } from './hooks/useSSE';
@@ -136,8 +135,6 @@ export default function App() {
         return <Prestige />;
       case 'leaderboard':
         return <Leaderboard />;
-      case 'debug':
-        return <DebugScreen />;
       case 'path-select':
         return <PathSelect />;
       case 'more':

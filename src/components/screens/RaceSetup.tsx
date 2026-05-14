@@ -6,7 +6,6 @@ import { usePlayerDrivers, usePlayerCars, useDistricts } from '../../hooks/useGa
 export function RaceSetup() {
   const game = useGameStore((s) => s.game);
   const updateGame = useGameStore((s) => s.updateGame);
-  const logDebug = useGameStore((s) => s.logDebug);
   const setScreen = useGameStore((s) => s.setScreen);
   const drivers = usePlayerDrivers();
   const cars = usePlayerCars();
@@ -44,14 +43,6 @@ export function RaceSetup() {
     };
 
     updateGame({ activeRaces: [...game.activeRaces, race] });
-    logDebug('RaceSetup: race added to activeRaces', {
-      raceId: race.id,
-      district: race.districtId,
-      stakes: race.stakes,
-      driverIds: race.playerDriverIds,
-      carIds: race.playerCarIds,
-      activeCount: game.activeRaces.length + 1,
-    });
     setLastStarted(race.id);
   };
 

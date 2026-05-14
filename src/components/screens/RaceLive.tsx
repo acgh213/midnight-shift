@@ -8,7 +8,6 @@ import { useAudio } from '../../hooks/useAudio';
 export function RaceLive() {
   const game = useGameStore((s) => s.game);
   const updateGame = useGameStore((s) => s.updateGame);
-  const logDebug = useGameStore((s) => s.logDebug);
   const setScreen = useGameStore((s) => s.setScreen);
   const activeRaces = game.activeRaces;
   const currentRaceId = activeRaces[0]?.id ?? null;
@@ -21,24 +20,14 @@ export function RaceLive() {
   const { playEngine, playCrash, playFinish } = useAudio();
 
   useEffect(() => {
-    if (!currentRaceId) {
-      logDebug('RaceLive: no active races');
-      return;
-    }
+    if (!currentRaceId) return;
 
-    // Read everything from the ref so the effect doesn't depend on `game` or `activeRaces`
     const currentGame = gameRef.current;
-    const races = currentGame.activeRaces;
-    const race = races[0];
+    const race = currentGame.activeRaces[0];
     if (!race || race.id !== currentRaceId) return;
 
-    logDebug('RaceLive: processing race', { raceId: race.id, stakes: race.stakes, length: race.length, district: race.districtId });
-
     const district = currentGame.districts[race.districtId];
-    if (!district) {
-      logDebug('RaceLive: district not found', { districtId: race.districtId });
-      return;
-    }
+    if (!district) return;
 
     playEngine();
 
@@ -51,42 +40,23 @@ export function RaceLive() {
     const totalTime = delayMap[race.length] || 5000;
     const isLong = totalTime > 5000;
 
-    logDebug(`RaceLive: simulating (delay: ${totalTime}ms)`, { length: race.length });
     const result = simulateRace(race, currentGame.drivers, currentGame.cars, district);
-    logDebug('RaceLive: simulation complete', {
-      outcome: result.outcome,
-      cash: result.rewards.cash,
-      rep: result.rewards.rep,
-      districtChange: result.districtControlChange,
-      eventsCount: result.events.length,
-    });
     setLiveEvents(result.events);
 
     const hasCrash = result.events.some((e) => e.type === 'CRASH_OUT' || e.type === 'CRASH_RECOVER');
     if (hasCrash) setTimeout(() => playCrash(), 500);
-
     if (isLong) setShowSkip(true);
 
     const timer = setTimeout(() => {
-      logDebug('RaceLive: timeout fired', { raceId: race.id });
       try {
         const newState = applyRaceResult(currentGame, result, race);
-        logDebug('RaceLive: applyRaceResult SUCCESS', {
-          outcome: result.outcome,
-          cashBefore: currentGame.economy.cash,
-          cashAfter: newState.economy.cash,
-          completedBefore: currentGame.completedRaceIds.length,
-          completedAfter: newState.completedRaceIds.length,
-          activeBefore: currentGame.activeRaces.length,
-          activeAfter: newState.activeRaces.length,
-        });
         setCompletedRaces((prev) => [...prev, result]);
         setLiveEvents([]);
         setShowSkip(false);
         playFinish();
         updateGame(newState);
-      } catch (err) {
-        logDebug('RaceLive: applyRaceResult FAILED', { error: String(err) });
+      } catch {
+        // applyRaceResult failed — race stays in activeRaces, will retry on next mount
       }
     }, totalTime);
 
@@ -99,16 +69,13 @@ export function RaceLive() {
         setShowSkip(false);
         playFinish();
         updateGame(newState);
-      } catch (err) {
-        logDebug('RaceLive: skip-apply FAILED', { error: String(err) });
+      } catch {
+        // skip failed
       }
     };
 
-    return () => {
-      logDebug('RaceLive: effect cleanup', { raceId: race.id });
-      clearTimeout(timer);
-    };
-  }, [currentRaceId, updateGame, logDebug, playEngine, playCrash, playFinish]);
+    return () => clearTimeout(timer);
+  }, [currentRaceId, updateGame, playEngine, playCrash, playFinish]);
 
   if (activeRaces.length === 0 && completedRaces.length === 0) {
     return (
